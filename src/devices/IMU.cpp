@@ -5,11 +5,12 @@
 
 Adafruit_BNO055 bno(55, 0x28);
 
+void initIMU() {
+    Wire.begin(21, 22);  // SDA, SCL. Cambia los pines si usas otros.
 
-void initIMU(){
-    if (!bno.begin()) {
-        Serial.println("No se detecta el BNO055");
-        while (true) delay(100);
+    while (!bno.begin()) {
+        Serial.println("BNO055 no detectado. Reintentando...");
+        delay(1000);
     }
 
     Serial.println("BNO055 conectado");
