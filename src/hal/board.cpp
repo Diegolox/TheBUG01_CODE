@@ -1,15 +1,15 @@
 #include <Arduino.h>
-#include "pins.h"
+#include "pines.h"
 #include "hal/board.h"
 
 void initBoard() {
     // Primero deshabilitar la excitacion de los motores.
     // STDBY esta conectado permanentemente a 3V3.
     pinMode(PIN_PWM_A, OUTPUT);
-    digitalWrite(PIN_PWM_A, LOW);
+    analogWrite(PIN_PWM_A, 0);
 
     pinMode(PIN_PWM_B, OUTPUT);
-    digitalWrite(PIN_PWM_B, LOW);
+    analogWrite(PIN_PWM_B, 0);
 
     // Entradas de direccion del driver.
     pinMode(PIN_IN_A_1, OUTPUT);

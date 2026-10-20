@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <hal/board.h>
+#include <devices/buzzer.h>
 
 
 void setup() {
@@ -7,5 +8,6 @@ void setup() {
 }
 
 void loop() {
-  // Your main code here
+  tocarBuzzer(2000, 100);
+  delay(2000);
 }
