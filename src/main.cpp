@@ -8,6 +8,5 @@ void setup() {
 }
 
 void loop() {
-  tocarBuzzer(2000, 100);
   delay(2000);
 }
