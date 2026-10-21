@@ -12,5 +12,14 @@ void setup() {
 }
 
 void loop() {
-  delay(2000);
-}
+    DatosBNO055 datos = leerIMU();
+
+    Serial.printf("Rumbo: %.2f | Roll: %.2f | Pitch: %.2f\n",
+                  datos.rumbo, datos.roll, datos.pitch);
+
+    Serial.printf("AccX: %.2f | AccY: %.2f | AccZ: %.2f\n",
+                  datos.accX, datos.accY, datos.accZ);
+
+    delay(100);
+  
+  }

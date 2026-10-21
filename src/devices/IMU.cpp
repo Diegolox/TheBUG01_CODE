@@ -1,17 +1,33 @@
-#include <devices/IMU.h>
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_BNO055.h>
+#include "config.h"
+#include "devices/IMU.h"
+#include "pines.h"
 
-Adafruit_BNO055 bno(55, 0x28);
+static Adafruit_BNO055 bno(55, 0x29, &Wire);
 
-void initIMU() {
-    Wire.begin(21, 22);  // SDA, SCL. Cambia los pines si usas otros.
+bool initIMU() {
+    Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
+    return bno.begin();
+}
 
-    while (!bno.begin()) {
-        Serial.println("BNO055 no detectado. Reintentando...");
-        delay(1000);
-    }
+DatosBNO055 leerIMU() {
+    DatosBNO055 datos;
 
-    Serial.println("BNO055 conectado");
+    imu::Vector<3> orientacion =
+        bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+
+    imu::Vector<3> aceleracion =
+        bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
+
+    datos.rumbo = orientacion.x();
+    datos.roll  = orientacion.y();
+    datos.pitch = orientacion.z();
+
+    datos.accX = aceleracion.x();
+    datos.accY = aceleracion.y();
+    datos.accZ = aceleracion.z();
+
+    return datos;
 }
