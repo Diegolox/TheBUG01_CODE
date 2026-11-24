@@ -1,15 +1,14 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_BNO055.h>
-#include "config.h"
 #include "devices/IMU.h"
 #include "pines.h"
 
 static Adafruit_BNO055 bno(55, 0x29, &Wire);
 
-bool initIMU() {
+bool initIMU(bool modoInercial) {
     Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
-    return bno.begin();
+    return bno.begin(modoInercial ? OPERATION_MODE_IMUPLUS : OPERATION_MODE_NDOF);
 }
 
 DatosBNO055 leerIMU() {
@@ -30,4 +29,10 @@ DatosBNO055 leerIMU() {
     datos.accZ = aceleracion.z();
 
     return datos;
+}
+
+GiroBNO055 leerGiroIMU() {
+    const imu::Vector<3> giro = bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
+    return {static_cast<float>(giro.x()), static_cast<float>(giro.y()),
+            static_cast<float>(giro.z())};
 }

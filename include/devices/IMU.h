@@ -9,6 +9,13 @@ struct DatosBNO055 {
     float accZ;
 };
 
-bool initIMU();
+struct GiroBNO055 {
+    float x;
+    float y;
+    float z;
+};
+
+bool initIMU(bool modoInercial = false);
 DatosBNO055 leerIMU();
+GiroBNO055 leerGiroIMU();
 
