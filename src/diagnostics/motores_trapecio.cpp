@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "hal/board.h"
-#include "pines.h"
+#include "devices/motores.h"
 
 namespace {
 
@@ -15,18 +15,8 @@ constexpr uint8_t maxDutyPercent = 60;
 constexpr uint16_t maxDuty = (255u * maxDutyPercent + 50u) / 100u;
 static_assert(maxDutyPercent > 0 && maxDutyPercent <= 100, "PWM maximo fuera de rango");
 
-struct Motor {
-    int number;
-    int pwm;
-    int in1;
-    int in2;
-};
-
-// El esquema cruza las etiquetas IN_A_1 e IN_A_2 respecto al driver.
-constexpr Motor motor1{1, PIN_PWM_A, PIN_IN_A_2, PIN_IN_A_1};
-constexpr Motor motor2{2, PIN_PWM_B, PIN_IN_B_1, PIN_IN_B_2};
-
-const Motor *activeMotor = nullptr;
+Motor activeMotor = Motor::M1;
+bool trialActive = false;
 uint32_t startedAt = 0;
 uint32_t lastUpdateAt = 0;
 uint32_t lastReportAt = 0;
@@ -44,17 +34,14 @@ uint8_t trapezoidDuty(uint32_t elapsed) {
     return 0;
 }
 
-void report(const Motor &motor, uint32_t elapsed, uint8_t duty) {
+void report(Motor motor, uint32_t elapsed, uint8_t duty) {
     Serial.printf("M%d | t=%lu ms | PWM=%.1f%%\n",
-                  motor.number, static_cast<unsigned long>(elapsed), duty * 100.0 / 255.0);
+                  static_cast<int>(motor), static_cast<unsigned long>(elapsed), duty * 100.0 / 255.0);
 }
 
-void startTrial(const Motor &motor) {
-    analogWrite(motor.pwm, 0);
-    digitalWrite(motor.in2, LOW);
-    digitalWrite(motor.in1, HIGH);
-
-    activeMotor = &motor;
+void startTrial(Motor motor) {
+    activeMotor = motor;
+    trialActive = true;
     startedAt = millis();
     lastUpdateAt = startedAt;
     lastReportAt = startedAt;
@@ -62,13 +49,10 @@ void startTrial(const Motor &motor) {
 }
 
 void stopTrial(uint32_t elapsed, const char *message) {
-    const Motor &motor = *activeMotor;
-    analogWrite(motor.pwm, 0);
-    digitalWrite(motor.in1, LOW);
-    digitalWrite(motor.in2, LOW);
-    activeMotor = nullptr;
+    setMotorPwm(activeMotor, 0);
+    trialActive = false;
 
-    report(motor, elapsed, 0);
+    report(activeMotor, elapsed, 0);
     Serial.println(message);
 }
 
@@ -84,17 +68,17 @@ void setup() {
 void loop() {
     while (Serial.available() > 0) {
         const int command = Serial.read();
-        if (command == 'x' && activeMotor) {
+        if (command == 'x' && trialActive) {
             stopTrial(millis() - startedAt, "Prueba cancelada");
             return;
         }
 
-        if (!activeMotor && (command == '1' || command == '2')) {
-            startTrial(command == '1' ? motor1 : motor2);
+        if (!trialActive && (command == '1' || command == '2')) {
+            startTrial(command == '1' ? Motor::M1 : Motor::M2);
         }
     }
 
-    if (!activeMotor) {
+    if (!trialActive) {
         return;
     }
 
@@ -107,11 +91,11 @@ void loop() {
 
     if (now - lastUpdateAt >= pwmUpdateMs) {
         const uint8_t duty = trapezoidDuty(elapsed);
-        analogWrite(activeMotor->pwm, duty);
+        setMotorPwm(activeMotor, duty);
         lastUpdateAt = now;
 
         if (now - lastReportAt >= reportMs) {
-            report(*activeMotor, elapsed, duty);
+            report(activeMotor, elapsed, duty);
             lastReportAt = now;
         }
     }
